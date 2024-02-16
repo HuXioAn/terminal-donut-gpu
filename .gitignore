@@ -6,3 +6,4 @@ ref/
 *.o
 *.a
 *.bin
+*.out
