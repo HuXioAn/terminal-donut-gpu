@@ -1,5 +1,6 @@
 ref/
 .DS_Store
+.vscode
 
 
 
@@ -7,3 +8,4 @@ ref/
 *.a
 *.bin
 *.out
+*.exe

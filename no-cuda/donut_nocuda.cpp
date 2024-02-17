@@ -20,11 +20,12 @@ const int resW = 80;
 //define the pos
 const float K2 = 5; //focus to the donut center
 
-//define the light
+//define the light, a opposite vecter of the light beem, simulating an infinite plane light source
+//it should be a unit vector
 
 const float lX = 0;
-const float lY = 1;
-const float lZ = -1;
+const float lY = 0.707;
+const float lZ = -0.707;
 
 
 
@@ -81,7 +82,7 @@ void renderFrame(float A, float B, char* outputP){
             if( ooz > zBuf[xP][yP] && lum > 0){
                 zBuf[xP][yP] = ooz;
 
-                int lumIndex = lum * 8;
+                int lumIndex = lum * 11.3;
                 outputP[xP + resW * yP] = ".,-~:;=!*#$@"[lumIndex];
             }
 
