@@ -22,9 +22,9 @@ const float K2 = 5; //focus to the donut center
 
 //define the light
 
-const int lX = 0;
-const int lY = 1;
-const int lZ = -1;
+const float lX = 0;
+const float lY = 1;
+const float lZ = -1;
 
 
 
@@ -76,9 +76,9 @@ void renderFrame(float A, float B, char* outputP){
                         lY * (cosTheta * cosPhi * sinB +
                         cosB * sinTheta * cosA -
                         cosB * sinPhi * cosTheta * sinA) +
-                        lZ * (sinA * sinTheta + sinPhi * sinTheta * cosA);
+                        lZ * (sinA * sinTheta + sinPhi * cosTheta * cosA);
 
-            if( ooz > zBuf[xP][yP] && lum >= 0){
+            if( ooz > zBuf[xP][yP] && lum > 0){
                 zBuf[xP][yP] = ooz;
 
                 int lumIndex = lum * 8;
@@ -98,7 +98,7 @@ void renderFrame(float A, float B, char* outputP){
 int main(){
 
     static char output[resH][resW];
-    float A = 0, B = 0;
+    float A = 3.14/2, B = 0;
 
     while(true){
         renderFrame(A, B, (char*)output);
@@ -108,8 +108,8 @@ int main(){
         for (int k = 0; k < resH * resW + 1; k++) {
             putchar(k % resW ? ((char*)output)[k] : 10); //newline or char
         }
-         A += 0.0704;
-         B += 0.0352;
+         A += 0.04;
+         B += 0.02;
         usleep(30000);
     }
 
