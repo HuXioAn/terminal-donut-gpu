@@ -18,7 +18,13 @@ const int resW = 80;
 
 
 //define the pos
-const float K2 = 5; //screen to the donut center
+const float K2 = 5; //focus to the donut center
+
+//define the light
+
+const int lX = 0;
+const int lY = 1;
+const int lZ = -1;
 
 
 
@@ -46,23 +52,37 @@ void renderFrame(float A, float B, char* outputP){
             float y = R1 * sinTheta;
 
             //rotate matrix
-            float xRotated = x * (cosB * cosPhi + sinA * sinB * sinPhi) - y * cosA * sinB;
-            float yRotated = x * (sinB * cosPhi - sinA * cosB * sinPhi) + y * cosA * cosB;
+            float xRotatedo = x * (cosB * cosPhi + sinA * sinB * sinPhi) - y * cosA * sinB;
+            float yRotatedo = x * (sinB * cosPhi - sinA * cosB * sinPhi) + y * cosA * cosB;
+
+            // float xRotated = cosPhi * x * cosB - sinB * (sinPhi * x * cosA - sinTheta * sinA);
+            // float yRotated = cosPhi * x * sinB + cosB * (sinPhi * x * cosA - sinTheta * sinA);
+
             float zRotated = K2 + cosA * x * sinPhi + y * sinA;
 
             float ooz = 1 / zRotated;
 
-            int xP = (int) (resW / 2 + K1 * ooz * x);
-            int yP = (int) (resH / 2 - K1 * ooz * y);
+            int xP = (int) (resW / 2 + K1 * ooz * xRotatedo);
+            int yP = (int) (resH / 2 - K1 * 0.5 * ooz * yRotatedo);
 
             if(xP >= resW || xP < 0 || yP >= resH || yP < 0){
                 //out of the screen, pass
                 continue;
             }
 
-            if( ooz > zBuf[xP][yP] ){
+            float lum = lX * (cosTheta * cosPhi * cosB + 
+                        sinPhi * cosTheta * sinA * sinB - 
+                        sinTheta * cosA * sinB) +
+                        lY * (cosTheta * cosPhi * sinB +
+                        cosB * sinTheta * cosA -
+                        cosB * sinPhi * cosTheta * sinA) +
+                        lZ * (sinA * sinTheta + sinPhi * sinTheta * cosA);
+
+            if( ooz > zBuf[xP][yP] && lum >= 0){
                 zBuf[xP][yP] = ooz;
-                outputP[xP + resW * yP] = '.';
+
+                int lumIndex = lum * 8;
+                outputP[xP + resW * yP] = ".,-~:;=!*#$@"[lumIndex];
             }
 
 
@@ -88,8 +108,8 @@ int main(){
         for (int k = 0; k < resH * resW + 1; k++) {
             putchar(k % resW ? ((char*)output)[k] : 10); //newline or char
         }
-        A += 0.0704;
-        B += 0.0352;
+         A += 0.0704;
+         B += 0.0352;
         usleep(30000);
     }
 
