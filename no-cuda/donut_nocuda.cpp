@@ -12,24 +12,22 @@ const float thetaStep = 0.07;
 const float phiStep = 0.02;
 
 //define the camera
-const float K1 = 30; //focus to the screen
-const int resH = 22;
+const float K1 = 30; //focus(origin) to the screen
+const int resH = 22; //render resolution
 const int resW = 80;
 
-
 //define the pos
-const float K2 = 5; //focus to the donut center
+const float K2 = 5; //focus(origin) to the donut center
 
 //define the light, a opposite vecter of the light beem, simulating an infinite plane light source
 //it should be a unit vector
-
 const float lX = 0;
 const float lY = 0.707;
 const float lZ = -0.707;
 
 
 
-void renderFrame(float A, float B, char* outputP){
+void renderFrame(float A, float B, char* outputP){ //A: rotate about x-axis, B: rotate about z-axis
 
     static float zBuf[resW][resH]; 
 
@@ -43,7 +41,7 @@ void renderFrame(float A, float B, char* outputP){
 
         float sinTheta = sin(theta), cosTheta = cos(theta);
 
-        for(float phi = 0; phi < 3.14 * 2; phi += phiStep){ //larger circle
+        for(float phi = 0; phi < 3.14 * 2; phi += phiStep){ //the larger circle
             float sinPhi = sin(phi), cosPhi = cos(phi);
             
             //for every point with theta, phi
@@ -71,6 +69,7 @@ void renderFrame(float A, float B, char* outputP){
                 continue;
             }
 
+            //illumination, Lvec * Normalvec
             float lum = lX * (cosTheta * cosPhi * cosB + 
                         sinPhi * cosTheta * sinA * sinB - 
                         sinTheta * cosA * sinB) +
@@ -79,10 +78,11 @@ void renderFrame(float A, float B, char* outputP){
                         cosB * sinPhi * cosTheta * sinA) +
                         lZ * (sinA * sinTheta + sinPhi * cosTheta * cosA);
 
-            if( ooz > zBuf[xP][yP] && lum > 0){
+            if( ooz > zBuf[xP][yP] /* current point is closer to the viewer */&&
+                lum > 0 /* the point is visible */){
                 zBuf[xP][yP] = ooz;
 
-                int lumIndex = lum * 11.3;
+                int lumIndex = lum * 11.3; //map the illuminance to the index
                 outputP[xP + resW * yP] = ".,-~:;=!*#$@"[lumIndex];
             }
 
@@ -99,7 +99,9 @@ void renderFrame(float A, float B, char* outputP){
 int main(){
 
     static char output[resH][resW];
-    float A = 3.14/2, B = 0;
+
+    //by default(A = 0), the donut is horizontally positioned, the hole will be invisible at the beginning
+    float A = 3.14/2, B = 0; 
 
     while(true){
         renderFrame(A, B, (char*)output);
@@ -109,6 +111,8 @@ int main(){
         for (int k = 0; k < resH * resW + 1; k++) {
             putchar(k % resW ? ((char*)output)[k] : 10); //newline or char
         }
+
+        //control the rotation speed
          A += 0.04;
          B += 0.02;
         usleep(30000);
