@@ -1,7 +1,7 @@
 
 # 3D donut in terminal - with CUDA
 
-![donut](./pic/donut.png)
+![donut](./pic/donut.gif)
 
 `dotnut.c` is an ascii-art from [a1k0n](https://www.a1k0n.net/2011/07/20/donut-math.html) which can be originated back to 2006. 
 
@@ -17,7 +17,7 @@ Recently, I started to get interested in CUDA programming. Then I realized the d
 ### no-cuda version
 
 ```shell
-#macOs
+#macOS
 no-coda % clang++ donut_nocuda.cpp -o donut
 no-coda % ./donut
 ```
@@ -35,5 +35,9 @@ CUDA acceleration requires compatible Nvidia GPU and CUDA runtime.
 cuda> nvcc ./donut_cuda.cu -o donut
 cuda> ./donut.exe
 ```
+
+## Appearance 
+Because there's little optimization in the code, parameters, including the illuminance, camera and display, can be adjusted.
+ 
 ---
 Enjoy the donut!
