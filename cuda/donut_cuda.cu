@@ -13,8 +13,8 @@
 #define R2 (2)
 
 //define the render grid
-#define thetaStep (0.07)
-#define phiStep (0.02)
+#define thetaStep (0.06)
+#define phiStep (0.03)
 
 //define the camera
 #define K1 (30) //focus(origin) to the screen
@@ -26,14 +26,18 @@
 
 //define the light, a opposite vecter of the light beem, simulating an infinite plane light source
 //it should be a unit vector
+//pls notice that it can not render the shade
 #define lX (0)
 #define lY (0.707)
 #define lZ (-0.707)
 
+//define buf depth for oozBuf and lumBuf, bigger if using smaller grid
+#define BUF_DEPTH (200)
 
 
 
-__global__ void renderPointCuda(const float A, const float B, float* zBuf, char* output){
+
+__global__ void calcPointCuda(const float A, const float B, float* oozBuf, float* lumBuf, int* depthBuf){
 
     //get the theta and phi from index
     float theta = blockIdx.x * thetaStep;
@@ -81,36 +85,81 @@ __global__ void renderPointCuda(const float A, const float B, float* zBuf, char*
                 cosB * sinPhi * cosTheta * sinA) +
                 lZ * (sinA * sinTheta + sinPhi * cosTheta * cosA);
 
-    if( ooz > zBuf[xP + yP * resW] /* current point is closer to the viewer */&&
-        lum > 0 /* the point is visible */){
-        zBuf[xP + yP * resW] = ooz;
-
-        int lumIndex = lum * 11.3; //map the illuminance to the index
-        output[xP + resW * yP] = ".,-~:;=!*#$@"[lumIndex];
-    }
-
+    int index = yP * resW + xP;
+    int indexBuf = BUF_DEPTH * index;
+    //take one slot for the point
+    int depth = atomicAdd(depthBuf+index, 1);
+    //if(depth > BUF_DEPTH)printf("%d\n", depth);
+    //store the ooz and lum
+    oozBuf[indexBuf + depth] = ooz;
+    lumBuf[indexBuf + depth] = lum;
 
 
 }
 
 
+__global__ void renderPixCuda(float* oozBuf, float* lumBuf, int* depthBuf, char* output){
+    //results from previous kernel
+    int x = threadIdx.x;
+    int y = blockIdx.x;
+
+    int index = y * resW + x;
+    int indexBuf = BUF_DEPTH * index;
+
+    float oozMax = 0;
+    
+
+    for(int i = 0; i < depthBuf[index]; i++){
+        //iterate each corresponding point
+        float ooz = oozBuf[indexBuf + i];
+        float lum = lumBuf[indexBuf + i];
+
+        if(ooz > oozMax){/* current point is closer to the viewer */
+            oozMax = ooz;
+            if(lum > 0 ){/* the point is visible */
+                int lumIndex = lum * 11.3; //map the illuminance to the index
+                output[index] = ".,-~:;=!*#$@"[lumIndex];
+            }else{
+                output[index] = ' ';
+            }
+        }
+    }
+
+}
+
+
+
 __host__ int main(){
 
     const size_t outputSize = resH * resW * sizeof(char);
-    char outputF[outputSize];
+    char outputF[outputSize]; //host buf 
 
     
-    char* output;
+    char* output; //device buf
     if(cudaSuccess != cudaMalloc(&output, outputSize)){
         //fail
         printf("[!]Unable to aloocate the output frame.");
         exit(-1);
     }
 
-    float* zBuf;
-    if(cudaSuccess != cudaMalloc(&zBuf, resH * resW * sizeof(float))){
+    float* oozBuf;
+    if(cudaSuccess != cudaMalloc(&oozBuf, BUF_DEPTH * resH * resW * sizeof(float))){
         //fail
-        printf("[!]Unable to aloocate the zBuf frame.");
+        printf("[!]Unable to aloocate the oozBuf frame.");
+        exit(-1);
+    }
+
+    float* lumBuf;
+    if(cudaSuccess != cudaMalloc(&lumBuf, BUF_DEPTH * resH * resW * sizeof(float))){
+        //fail
+        printf("[!]Unable to aloocate the lumBuf frame.");
+        exit(-1);
+    }
+
+    int* depthBuf;
+    if(cudaSuccess != cudaMalloc(&depthBuf, resH * resW * sizeof(int))){
+        //fail
+        printf("[!]Unable to aloocate the depthBuf frame.");
         exit(-1);
     }
 
@@ -121,18 +170,28 @@ __host__ int main(){
     while(true){
         //clear the buf on the gpu
         cudaMemset(output, ' ', resW * resH * sizeof(char));
-        cudaMemset(zBuf, 0, resW * resH * sizeof(float));
+        cudaMemset(oozBuf, 0, BUF_DEPTH * resH * resW * sizeof(float));
+        cudaMemset(lumBuf, 0, BUF_DEPTH * resH * resW * sizeof(float));
+        cudaMemset(depthBuf, 0, resH * resW * sizeof(int));
         
         //thread for every point on the donut, grid for small circle, block for big circle
-        renderPointCuda<<<6.28/thetaStep,6.28/phiStep>>>(A, B, zBuf, output);
+        calcPointCuda<<<6.28/thetaStep,6.28/phiStep>>>(A, B, oozBuf, lumBuf, depthBuf);
 
         cudaDeviceSynchronize();    
         cudaError_t error = cudaGetLastError();
         if (error != cudaSuccess) {
-            printf("[!]CUDA error: %s\n", cudaGetErrorString(error));
+            printf("[!]CUDA error:calcpoint: %s\n", cudaGetErrorString(error));
             exit(1);
         }
-        
+
+        renderPixCuda<<<resH,resW>>>(oozBuf, lumBuf, depthBuf, output);
+
+        cudaDeviceSynchronize();    
+        error = cudaGetLastError();
+        if (error != cudaSuccess) {
+            printf("[!]CUDA error:renderpix: %s\n", cudaGetErrorString(error));
+            exit(1);
+        }
         //get the frame from gpu
         cudaMemcpy(outputF, output, outputSize, cudaMemcpyDeviceToHost);
 
