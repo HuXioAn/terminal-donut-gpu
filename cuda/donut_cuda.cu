@@ -13,7 +13,7 @@
 #define R2 (2)
 
 //define the render grid
-#define thetaStep (0.07)
+#define thetaStep (0.06)
 #define phiStep (0.02)
 
 //define the camera
@@ -146,7 +146,7 @@ __host__ int main(){
         //control the rotation speed
          A += 0.04;
          B += 0.02;
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 
     

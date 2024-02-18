@@ -1,7 +1,10 @@
 #include <iostream>
 #include <stdio.h>
 #include <math.h>
-#include <unistd.h>
+//#include <unistd.h>
+#include <chrono>
+#include <thread>
+#include <cstring>
 
 //define the donut 
 const float R1 = 1;
@@ -115,7 +118,7 @@ int main(){
         //control the rotation speed
          A += 0.04;
          B += 0.02;
-        usleep(30000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 
     
