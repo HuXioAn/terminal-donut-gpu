@@ -24,6 +24,7 @@ const float K2 = 5; //focus(origin) to the donut center
 
 //define the light, a opposite vecter of the light beem, simulating an infinite plane light source
 //it should be a unit vector
+//pls notice that it can not render the shade
 const float lX = 0;
 const float lY = 0.707;
 const float lZ = -0.707;
@@ -81,12 +82,15 @@ void renderFrame(float A, float B, char* outputP){ //A: rotate about x-axis, B: 
                         cosB * sinPhi * cosTheta * sinA) +
                         lZ * (sinA * sinTheta + sinPhi * cosTheta * cosA);
 
-            if( ooz > zBuf[xP][yP] /* current point is closer to the viewer */&&
-                lum > 0 /* the point is visible */){
+            if(ooz > zBuf[xP][yP]){/* current point is closer to the viewer */
                 zBuf[xP][yP] = ooz;
 
-                int lumIndex = lum * 11.3; //map the illuminance to the index
-                outputP[xP + resW * yP] = ".,-~:;=!*#$@"[lumIndex];
+                if(lum > 0 ){/* the point is visible */
+                    int lumIndex = lum * 11.3; //map the illuminance to the index
+                    outputP[xP + resW * yP] = ".,-~:;=!*#$@"[lumIndex];
+                }else{
+                    outputP[xP + resW * yP] = ' ';
+                }
             }
 
 
