@@ -9,3 +9,5 @@ ref/
 *.bin
 *.out
 *.exe
+*.exp
+*.lib
