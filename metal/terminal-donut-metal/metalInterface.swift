@@ -16,6 +16,8 @@ class MetalInterface{
     var pipeLineState : MTLComputePipelineState!
     var commandQueue : MTLCommandQueue!
     var kernel : MTLFunction!
+    var cmdBuffer : MTLCommandBuffer!
+    var computeEncoder : MTLComputeCommandEncoder!
     
     init(device: MTLDevice, kernalName: String) {
         self.device = device
@@ -43,17 +45,41 @@ class MetalInterface{
         }
         self.commandQueue = cmdQueue
         
+        cmdBuffer = commandQueue.makeCommandBuffer()
+        assert(cmdBuffer != nil)
+        computeEncoder = cmdBuffer?.makeComputeCommandEncoder()
+        assert(computeEncoder != nil)
+        computeEncoder?.setComputePipelineState(pipeLineState)
+        
+    }
+    
+    func loadBuffer(length: Int, bufferOption: MTLResourceOptions, argIndex: Int) -> MTLBuffer?{
+        
+        let buffer = device.makeBuffer(length: length, options: bufferOption)
+        if buffer == nil {
+            print("[!]MetalInterface: Can not allocate the buffer")
+            return nil
+        }
+        
+        computeEncoder.setBuffer(buffer, offset: 0, index: argIndex)
+        
+        return buffer
+    }
+    
+    func loadBuffer(fromPtr: UnsafePointer<Any>, length: Int, bufferOption: MTLResourceOptions, argIndex: Int) -> MTLBuffer?{
+        
+        let buffer = device.makeBuffer(bytes: fromPtr, length: length, options: bufferOption)
+        if buffer == nil {
+            print("[!]MetalInterface: Can not allocate the buffer")
+            return nil
+        }
+        
+        computeEncoder.setBuffer(buffer, offset: 0, index: argIndex)
+        
+        return buffer
     }
     
     func compute(threadNum: Int) -> MTLCommandBuffer{
-        let cmdBuffer = commandQueue.makeCommandBuffer()
-        assert(cmdBuffer != nil)
-        let computeEncoder = cmdBuffer?.makeComputeCommandEncoder()
-        assert(computeEncoder != nil)
-        
-        computeEncoder?.setComputePipelineState(pipeLineState)
-        
-        //set buffer
         
         //thread alloc
         var threadGroupSizeMax = pipeLineState.maxTotalThreadsPerThreadgroup
