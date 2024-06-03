@@ -79,21 +79,27 @@ class MetalInterface{
         return buffer
     }
     
-    func compute(threadNum: Int) -> MTLCommandBuffer{
-        
+    func loadArg(fromPtr: UnsafePointer<Any>, length: Int, argIndex: Int){
+        //used for small non-persisting mem, <4KB
+        computeEncoder.setBytes(fromPtr, length: length, index: argIndex)
+    }
+    
+    func compute(threadPerGroup: Int, groupPerGrid: Int) -> MTLCommandBuffer?{
+        let threadNum = threadPerGroup * groupPerGrid
         //thread alloc
         var threadGroupSizeMax = pipeLineState.maxTotalThreadsPerThreadgroup
-        if(threadGroupSizeMax > threadNum){
-            threadGroupSizeMax = threadNum
+        if(threadGroupSizeMax < threadPerGroup){
+            print("[!] threadPerGroup: ", threadPerGroup, " > maxTotalThreadsPerThreadgroup: ", threadGroupSizeMax)
+            return nil
         }
-        let threadGroupSize = MTLSizeMake(threadGroupSizeMax, 1, 1)
+        let threadGroupSize = MTLSizeMake(threadPerGroup, 1, 1)
         let gridSize = MTLSizeMake(threadNum, 1, 1) // one-dimension
         computeEncoder?.dispatchThreads(gridSize, threadsPerThreadgroup: threadGroupSize)
         
         computeEncoder?.endEncoding()
         cmdBuffer?.commit()
         
-        return cmdBuffer!
+        return cmdBuffer
     }
     
     
