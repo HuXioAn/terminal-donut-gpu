@@ -1,5 +1,5 @@
 
-# 3D donut in terminal - with CUDA
+# 3D donut in terminal - with CUDA \ Apple Metal
 
 ![donut](./pic/donut.gif)
 
@@ -13,8 +13,9 @@ Recently, I started to get interested in CUDA programming. Then I realized the d
 
 > [donut_nocuda.cpp](./no-cuda/donut_nocuda.cpp) is the normal donut code, but more readable.  
 > [donut_cuda.cu](./cuda/donut_cuda.cu) is the CUDA accelerated version.
+> [metal](./metal/), here is the xcode project for Metal accelerated donut
 
-### no-cuda version
+### no-cuda 
 
 ```shell
 #macOS
@@ -27,7 +28,7 @@ no-cuda> gcc donut_nocuda.cpp -o donut
 no-cuda> ./donut.exe
 ```
 
-### cuda version
+### cuda 
 CUDA acceleration requires compatible Nvidia GPU and CUDA runtime.
 
 ```shell
@@ -35,6 +36,11 @@ CUDA acceleration requires compatible Nvidia GPU and CUDA runtime.
 cuda> nvcc ./donut_cuda.cu -o donut
 cuda> ./donut.exe
 ```
+
+### metal
+Apple Metal accelerated donut, tested on Apple silicon devices.
+
+Build the project with xcode or use the [release](https://github.com/HuXioAn/terminal-donut-gpu/releases/tag/metal) here for macOS 14 and higher.
 
 ## Appearance 
 Because there's little optimization in the code, parameters, including the illuminance, camera and display, can be adjusted.
