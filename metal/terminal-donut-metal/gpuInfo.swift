@@ -1,3 +1,8 @@
+/*
+ This code is from https://github.com/dehesa/sample-metal/tree/main/Terminal/Inspector
+ Trimmed
+ */
+
 import CoreGraphics
 import Metal
 

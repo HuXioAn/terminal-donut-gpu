@@ -52,8 +52,9 @@ class MetalInterface{
         computeEncoder?.setComputePipelineState(pipeLineState)
         
     }
-    
-    func loadBuffer(length: Int, bufferOption: MTLResourceOptions, argIndex: Int) -> MTLBuffer?{
+//*******************************************
+    func createAndLoadBuffer(length: Int, bufferOption: MTLResourceOptions, argIndex: Int) -> MTLBuffer?{
+        
         
         let buffer = device.makeBuffer(length: length, options: bufferOption)
         if buffer == nil {
@@ -66,7 +67,7 @@ class MetalInterface{
         return buffer
     }
     
-    func loadBuffer(fromPtr: UnsafePointer<Any>, length: Int, bufferOption: MTLResourceOptions, argIndex: Int) -> MTLBuffer?{
+    func createAndLoadBuffer(fromPtr: UnsafePointer<Any>, length: Int, bufferOption: MTLResourceOptions, argIndex: Int) -> MTLBuffer?{
         
         let buffer = device.makeBuffer(bytes: fromPtr, length: length, options: bufferOption)
         if buffer == nil {
@@ -84,10 +85,22 @@ class MetalInterface{
         computeEncoder.setBytes(fromPtr, length: length, index: argIndex)
     }
     
+    func loadBuffer(buffer: MTLBuffer, argIndex: Int){
+        computeEncoder.setBuffer(buffer, offset: 0, index: argIndex)
+    }
+    
+    
+    func reloadArgs(){
+        
+    }
+
+//**************************************************
+    
     func compute(threadPerGroup: Int, groupPerGrid: Int) -> MTLCommandBuffer?{
+        
         let threadNum = threadPerGroup * groupPerGrid
         //thread alloc
-        var threadGroupSizeMax = pipeLineState.maxTotalThreadsPerThreadgroup
+        let threadGroupSizeMax = pipeLineState.maxTotalThreadsPerThreadgroup
         if(threadGroupSizeMax < threadPerGroup){
             print("[!] threadPerGroup: ", threadPerGroup, " > maxTotalThreadsPerThreadgroup: ", threadGroupSizeMax)
             return nil
@@ -100,6 +113,16 @@ class MetalInterface{
         cmdBuffer?.commit()
         
         return cmdBuffer
+    }
+    
+    func reLoad() {
+        cmdBuffer = commandQueue.makeCommandBuffer()
+        assert(cmdBuffer != nil)
+        computeEncoder = cmdBuffer?.makeComputeCommandEncoder()
+        assert(computeEncoder != nil)
+        computeEncoder?.setComputePipelineState(pipeLineState)
+        
+        //buffer reload
     }
     
     

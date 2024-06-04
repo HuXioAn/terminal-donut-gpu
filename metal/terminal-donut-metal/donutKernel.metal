@@ -37,7 +37,7 @@ using namespace metal;
 #define BUF_DEPTH (200)
 
 
-kernel void calcPointMetal(device const float& A,
+kernel void calcPointMetal(device const float& A , 
                            device const float& B,
                            device float* oozBuf,
                            device float* lumBuf,
@@ -108,8 +108,39 @@ kernel void calcPointMetal(device const float& A,
 }
 
 
-kernel void renderPixMetal(){
+kernel void renderPixMetal(device float* oozBuf,
+                           device float* lumBuf,
+                           device uint* depthBuf,
+                           device char* output,
+                           uint groupInGrid [[threadgroup_position_in_grid]],
+                           uint threadInGroup [[thread_index_in_threadgroup]]
+                           ){
+    //results from previous kernel
+    int x = threadInGroup;
+    int y = groupInGrid;
+
+    int index = y * resW + x;
+    int indexBuf = BUF_DEPTH * index;
+
+    float oozMax = 0;
     
+    output[index] = ' ';
+    for(uint i = 0; i < depthBuf[index]; i++){
+       //iterate each corresponding point
+       float ooz = oozBuf[indexBuf + i];
+       float lum = lumBuf[indexBuf + i];
+
+       if(ooz > oozMax){/* current point is closer to the viewer */
+           oozMax = ooz;
+           if(lum > 0 ){/* the point is visible */
+               int lumIndex = lum * 11.3; //map the illuminance to the index
+               output[index] = ".,-~:;=!*#$@"[lumIndex];
+           }else{
+               output[index] = ' ';
+           }
+       }
+    }
+    depthBuf[index] = 0;
 }
 
 

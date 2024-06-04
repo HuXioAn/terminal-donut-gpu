@@ -23,5 +23,7 @@ class DonutParam {
     let lX: Float = 0
     let lY: Float = 0.707
     let lZ: Float = -0.707
+    
+    let BUF_DEPTH = 200
 }
 
